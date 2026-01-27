@@ -5,6 +5,27 @@ import {prisma} from "../src/database";
 import {CardModel} from "../src/generated/prisma/models/Card";
 import {PokemonType} from "../src/generated/prisma/enums";
 
+/**
+ * Retourne 10 cartes aléatoires parmi les cartes disponibles
+ * @param cardsAvailable Liste des cartes disponibles
+ * @return Liste de 10 cartes aléatoires parmi les cartes disponibles
+ */
+function randomCard(cardsAvailable: CardModel[]): CardModel[] {
+    const result: CardModel[] = [];
+    const availableCards = [...cardsAvailable];
+
+    for (let i = 0; i < 10; i++) {
+        // Math.random retourne un nombre entre 0 et 1
+        // On le multiplie par la longueur du tableau pour obtenir un index valide
+        // On utilise Math.floor pour arrondir à l'entier inférieur
+        const randomIndex = Math.floor(Math.random() * availableCards.length);
+        result.push(availableCards[randomIndex]);
+        availableCards.splice(randomIndex, 1);
+    }
+
+    return result;
+}
+
 async function main() {
     console.log("🌱 Starting database seed...");
 
@@ -57,6 +78,50 @@ async function main() {
     );
 
     console.log(`✅ Created ${pokemonData.length} Pokemon cards`);
+
+    // Créer un deck de démarrage pour l'utilisateur 'red'
+    const redStarterCards = randomCard(createdCards);
+    const redDeck = await prisma.deck.create({
+        data: {
+            name: "Starter Deck",
+            userId: redUser.id,
+        },
+    });
+
+    await Promise.all(
+        redStarterCards.map((card) =>
+            prisma.deckCard.create({
+                data: {
+                    deckId: redDeck.id,
+                    cardId: card.id,
+                },
+            })
+        )
+    );
+
+    console.log(`✅ Created Starter Deck for ${redUser.username} with ${redStarterCards.length} cards`);
+
+    // Créer un deck de démarrage pour l'utilisateur blue
+    const blueStarterCards = randomCard(createdCards);
+    const blueDeck = await prisma.deck.create({
+        data: {
+            name: "Starter Deck",
+            userId: blueUser.id,
+        },
+    });
+
+    await Promise.all(
+        blueStarterCards.map((card) =>
+            prisma.deckCard.create({
+                data: {
+                    deckId: blueDeck.id,
+                    cardId: card.id,
+                },
+            })
+        )
+    );
+
+    console.log(`✅ Created Starter Deck for ${blueUser.username} with ${blueStarterCards.length} cards`);
 
     console.log("\n🎉 Database seeding completed!");
 }
