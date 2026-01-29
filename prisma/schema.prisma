@@ -65,8 +65,7 @@ model DeckCard {
   id     Int  @id @default(autoincrement())
   deck   Deck @relation(fields: [deckId], references: [id])
   deckId Int
+
   card   Card @relation(fields: [cardId], references: [id])
   cardId Int
-
-  @@unique([deckId, cardId])
 }

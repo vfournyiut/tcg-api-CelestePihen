@@ -11,6 +11,10 @@ import {PokemonType} from "../src/generated/prisma/enums";
  * @return Liste de 10 cartes aléatoires parmi les cartes disponibles
  */
 function randomCard(cardsAvailable: CardModel[]): CardModel[] {
+    if (cardsAvailable.length < 10) {
+        throw new Error("At least 10 cards are required.");
+    }
+
     const result: CardModel[] = [];
     const availableCards = [...cardsAvailable];
 
@@ -29,6 +33,8 @@ function randomCard(cardsAvailable: CardModel[]): CardModel[] {
 async function main() {
     console.log("🌱 Starting database seed...");
 
+    await prisma.deckCard.deleteMany();
+    await prisma.deck.deleteMany();
     await prisma.card.deleteMany();
     await prisma.user.deleteMany();
 
@@ -85,6 +91,7 @@ async function main() {
         data: {
             name: "Starter Deck",
             userId: redUser.id,
+
         },
     });
 
