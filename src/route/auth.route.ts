@@ -1,23 +1,24 @@
-import {Request, Response, Router} from 'express'
+import {Response, Router} from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import prisma from '../client'
+import {prisma} from '../database'
+import {SignInRequest, SignUpRequest} from "../types/auth.type"
 
 export const authRouter = Router()
 
 // POST /auth/sign-up
 // Accessible via POST /auth/sign-up
-authRouter.post('/sign-up', async (req: Request, res: Response) => {
-    const { email, username, password } = req.body
+authRouter.post('/sign-up', async (req: SignUpRequest, res: Response) => {
+    const {email, password, username} = req.body
 
     try {
-        if (email === "" || username === "" || password === "") {
+        if (!email || !username || !password) {
             return res.status(400).json({error: 'Données invalides'})
         }
 
         // Vérifier si le mail ou l'username est déjà utilisé
         const user = await prisma.user.findFirst({
-            where: {OR: [{email}, {username}] },
+            where: {OR: [{email}, {username}]},
         })
 
         if (user) {
@@ -45,21 +46,21 @@ authRouter.post('/sign-up', async (req: Request, res: Response) => {
             {expiresIn: '7d'}, // Le token expire dans 7 jours
         )
 
-        res.status(201).json({
+        return res.status(201).json({
             message: 'Utilisateur créé',
             token,
             userCreated,
         })
     } catch (error) {
         console.error('Erreur lors de l\'inscription:', error)
-        return res.status(500).json({ error: 'Erreur serveur' })
+        return res.status(500).json({error: 'Erreur serveur'})
     }
 });
 
 // POST /auth/sign-in
 // Accessible via POST /auth/sign-in
-authRouter.post('/sign-in', async (req: Request, res: Response) => {
-    const { email, password } = req.body
+authRouter.post('/sign-in', async (req: SignInRequest, res: Response) => {
+    const {email, password} = req.body
 
     try {
         if (email === "" || password === "") {
@@ -68,7 +69,7 @@ authRouter.post('/sign-in', async (req: Request, res: Response) => {
 
         // Vérifier que l'utilisateur existe
         const user = await prisma.user.findUnique({
-            where: { email },
+            where: {email},
         })
 
         if (!user) {
@@ -104,6 +105,6 @@ authRouter.post('/sign-in', async (req: Request, res: Response) => {
         })
     } catch (error) {
         console.error('Erreur lors de la connexion:', error)
-        return res.status(500).json({ error: 'Erreur serveur' })
+        return res.status(500).json({error: 'Erreur serveur'})
     }
 })
