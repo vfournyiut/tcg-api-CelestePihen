@@ -45,7 +45,7 @@ deckRouter.post('/', authenticateToken, async (req: DeckRequest, res: Response) 
             },
         });
 
-        return res.status(201).json({message: "Deck crée avec succès"})
+        return res.status(201).json({message: "Deck créé avec succès"})
     } catch (error) {
         console.error('Erreur lors de la création du deck: ', error)
         return res.status(500).json({error: 'Erreur serveur'})
@@ -69,10 +69,6 @@ deckRouter.get('/mine', authenticateToken, async (req: Request, res: Response) =
                 deckCards: true
             }
         })
-
-        if (decks.length === 0) {
-            return res.status(200).json({message: "Aucun deck trouvé"})
-        }
 
         return res.status(200).json(decks)
     } catch (error) {
