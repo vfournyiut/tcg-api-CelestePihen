@@ -1,12 +1,11 @@
 import {Request, Response, Router} from 'express'
 import {prisma} from '../database'
-import {authenticateToken} from "../middleware/auth.middleware";
 
 export const cardRouter = Router()
 
 // GET /cards
-// Accessible via POST /cards
-cardRouter.get('/', authenticateToken, async (_req: Request, res: Response) => {
+// Accessible via GET /cards
+cardRouter.get('/', async (_req: Request, res: Response) => {
     try {
         const cards = await prisma.card.findMany({
             select: {
@@ -23,10 +22,7 @@ cardRouter.get('/', authenticateToken, async (_req: Request, res: Response) => {
             }
         });
 
-        return res.status(200).json({
-            message: 'Cartes obtenus',
-            cards
-        })
+        return res.status(200).json({ cards })
     } catch (error) {
         console.error('Erreur lors de l\'obtention des cartes:', error)
         return res.status(500).json({error: 'Erreur serveur'})
