@@ -39,7 +39,7 @@ authRouter.post('/sign-up', async (req: SignUpRequest, res: Response) => {
 
         const token = jwt.sign(
             {
-                id: userCreated.id,
+                userId: userCreated.id,
                 email: userCreated.email,
             },
             process.env.JWT_SECRET as string,
@@ -63,7 +63,7 @@ authRouter.post('/sign-in', async (req: SignInRequest, res: Response) => {
     const {email, password} = req.body
 
     try {
-        if (email === "" || password === "") {
+        if (!email || !password) {
             return res.status(400).json({error: 'Données invalides'})
         }
 
