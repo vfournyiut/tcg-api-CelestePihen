@@ -131,8 +131,8 @@ deckRouter.patch('/:id', authenticateToken, async (req: DeckPatchRequest, res: R
             return res.status(401).json({error: 'Token invalide ou expiré'})
         }
 
-        // vérifie si deckId s'est bien converti en number
-        if (isNaN(deckId)) {
+        // vérifie si deckId s'est bien converti en number ou si le nom est invalide
+        if (isNaN(deckId) || !name) {
             return res.status(404).json({error: 'Deck invalide'})
         }
 
@@ -192,6 +192,7 @@ deckRouter.delete('/:id', authenticateToken, async (req: Request, res: Response)
 
         const deckId = parseInt(req.params.id);
 
+        // vérifier si deckId s'est bien converti en number
         if (isNaN(deckId)) {
             return res.status(404).json({error: 'Deck invalide'})
         }
@@ -222,7 +223,7 @@ deckRouter.delete('/:id', authenticateToken, async (req: Request, res: Response)
             where: {id: deck.id}
         })
 
-        return res.status(200).json({error: 'Deck supprimé avec succès'})
+        return res.status(200).json({message: 'Deck supprimé avec succès'})
     } catch (error) {
         console.error('Erreur lors de la récupération du deck: ', error)
         return res.status(500).json({error: 'Erreur serveur'})
