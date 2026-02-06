@@ -1,21 +1,23 @@
 import { Request } from 'express'
 
 export type DeckRequestBody = {
-    name: string;
-    cards: number[];
-};
-
-export interface DeckRequest extends Request<{}, any, DeckRequestBody> {
+  name: string
+  cards: number[]
 }
 
+export interface DeckRequest extends Request<{}, any, DeckRequestBody> {}
+
 export type DeckRequestParam = {
-    id: string;
+  id: string
 }
 
 export type DeckPatchRequestBody = {
-    name: string;
-    cards: number[];
+  name: string
+  cards: number[]
 }
 
-export interface DeckPatchRequest extends Request<DeckRequestParam, any, DeckPatchRequestBody> {
-}
+export interface DeckPatchRequest extends Request<
+  DeckRequestParam,
+  any,
+  DeckPatchRequestBody
+> {}
