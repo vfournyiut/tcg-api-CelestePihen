@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 import request from 'supertest'
 import {prismaMock} from "./vitest.setup";
 import {app} from "../src";
+import bcrypt from "bcryptjs";
 
 describe('POST /auth/sign-up', () => {
     it('should create and return a user and his token', async () => {
@@ -72,11 +73,13 @@ describe('POST /auth/sign-up', () => {
 
 describe('POST /auth/sign-in', () => {
     it('should return the user', async () => {
+        const hashedPassword = await bcrypt.hash('password123', 10)
+
         const existingUser = {
             id: 0,
             username: 'Charlie',
             email: 'charlie@example.com',
-            password: '$2y$10$0rjSse.AfWYKe84xI7OUkuKf82HyR6dVnTtb64u6l9Lv6GzRuUerK',
+            password: hashedPassword,
             createdAt: new Date(2026, 2, 6, 9, 0, 0, 0),
             updatedAt: new Date(2026, 2, 6, 9, 0, 0, 0)
         }
