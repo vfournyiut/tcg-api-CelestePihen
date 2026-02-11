@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 import request from 'supertest'
-import {prismaMock} from "./vitest.setup";
+import {prismaMock, authenticateTokenMock} from "./vitest.setup";
 import {app} from "../src";
 import {PokemonType} from "../src/generated/prisma/enums";
 
@@ -142,6 +142,17 @@ describe('POST /decks', () => {
         expect(response.body).toHaveProperty('message', 'Deck créé avec succès')
     });
 
+    it('should return 500 when cards field is missing', async () => {
+        const response = await request(app)
+            .post('/api/decks')
+            .send({
+                name: "Test Deck"
+            })
+
+        expect(response.status).toBe(500)
+        expect(response.body).toHaveProperty('error', 'Erreur serveur')
+    })
+
     it('should return 400 for invalid name', async () => {
         const response = await request(app)
             .post('/api/decks')
@@ -219,9 +230,37 @@ describe('POST /decks', () => {
         expect(response.status).toBe(500)
         expect(response.body).toHaveProperty('error', 'Erreur serveur')
     });
+
+    it('should return 401 when userId is not set', async () => {
+        authenticateTokenMock.mockImplementation((_req, _res, next) => {
+            next()
+        })
+
+        const response = await request(app)
+            .post('/api/decks')
+            .send({
+                name: "Test Deck",
+                cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            })
+
+        expect(response.status).toBe(401)
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré')
+    })
 })
 
 describe('GET /decks/mine', () => {
+    it('should deny access when user is not authenticated (401)', async () => {
+        authenticateTokenMock.mockImplementation((_req, res) => {
+            return res.status(401).json({error: 'Token manquant'})
+        })
+
+        const response = await request(app)
+            .get('/api/decks/mine')
+
+        expect(response.status).toBe(401)
+            expect(response.body).toHaveProperty('error', 'Token manquant')
+    })
+
     it('should return user decks', async () => {
         const userDecks = [
             {
@@ -273,6 +312,18 @@ describe('GET /decks/mine', () => {
         expect(response.status).toBe(500)
         expect(response.body).toHaveProperty('error', 'Erreur serveur')
     });
+
+    it('should return 401 when userId is not set', async () => {
+        authenticateTokenMock.mockImplementation((_req, _res, next) => {
+            next()
+        })
+
+        const response = await request(app)
+            .get('/api/decks/mine')
+
+        expect(response.status).toBe(401)
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré')
+    })
 })
 
 describe('GET /decks/:id', () => {
@@ -346,6 +397,18 @@ describe('GET /decks/:id', () => {
         expect(response.status).toBe(500)
         expect(response.body).toHaveProperty('error', 'Erreur serveur')
     });
+
+    it('should return 401 when userId is not set', async () => {
+        authenticateTokenMock.mockImplementation((_req, _res, next) => {
+            next()
+        })
+
+        const response = await request(app)
+            .get('/api/decks/1')
+
+        expect(response.status).toBe(401)
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré')
+    })
 })
 
 describe('PATCH /decks/:id', () => {
@@ -626,6 +689,22 @@ describe('PATCH /decks/:id', () => {
         expect(response.status).toBe(500)
         expect(response.body).toHaveProperty('error', 'Erreur serveur')
     });
+
+    it('should return 401 when userId is not set', async () => {
+        authenticateTokenMock.mockImplementation((_req, _res, next) => {
+            next()
+        })
+
+        const response = await request(app)
+            .patch('/api/decks/1')
+            .send({
+                name: "Updated Deck",
+                cards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            })
+
+        expect(response.status).toBe(401)
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré')
+    })
 })
 
 describe('DELETE /decks/:id', () => {
@@ -702,4 +781,16 @@ describe('DELETE /decks/:id', () => {
         expect(response.status).toBe(500)
         expect(response.body).toHaveProperty('error', 'Erreur serveur')
     });
+
+    it('should return 401 when userId is not set', async () => {
+        authenticateTokenMock.mockImplementation((_req, _res, next) => {
+            next()
+        })
+
+        const response = await request(app)
+            .delete('/api/decks/1')
+
+        expect(response.status).toBe(401)
+        expect(response.body).toHaveProperty('error', 'Token invalide ou expiré')
+    })
 })
