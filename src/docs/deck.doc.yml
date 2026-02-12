@@ -1,0 +1,272 @@
+paths:
+  /decks:
+    post:
+      tags:
+        - Decks
+      summary: Créer un nouveau deck
+      description: |
+        Crée un nouveau deck personnalisé contenant exactement 10 cartes Pokémon.
+        
+        **Validations:**
+        - Authentification requise (JWT)
+        - Le nom du deck est obligatoire
+        - Le deck doit contenir exactement 10 cartes
+        - Toutes les cartes doivent exister (vérification via numéro Pokédex)
+        
+        **Processus:**
+        1. Vérifie l'authentification
+        2. Valide le nom et le nombre de cartes
+        3. Vérifie que toutes les cartes existent
+        4. Crée le deck et associe les cartes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeckRequest'
+            examples:
+              electricTeam:
+                summary: Équipe électrique
+                value:
+                  name: "Mon équipe électrique"
+                  cards: [25, 26, 135, 81, 82, 100, 101, 172, 239, 466]
+              fireTeam:
+                summary: Équipe feu
+                value:
+                  name: "Équipe de feu"
+                  cards: [4, 5, 6, 37, 38, 58, 59, 77, 78, 136]
+      responses:
+        '201':
+          description: Deck créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+              example:
+                message: "Deck créé avec succès"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /decks/mine:
+    get:
+      tags:
+        - Decks
+      summary: Récupérer tous mes decks
+      description: |
+        Retourne tous les decks appartenant à l'utilisateur connecté.
+        
+        **Authentification requise:** JWT Bearer Token
+        
+        **Retour:**
+        - Liste de tous les decks de l'utilisateur
+        - Chaque deck contient ses cartes associées
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des decks récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deck'
+              example:
+                - id: 1
+                  name: "Mon équipe électrique"
+                  userId: 1
+                  deckCards:
+                    - id: 1
+                      deckId: 1
+                      cardId: 25
+                    - id: 2
+                      deckId: 1
+                      cardId: 26
+                - id: 2
+                  name: "Équipe de feu"
+                  userId: 1
+                  deckCards:
+                    - id: 10
+                      deckId: 2
+                      cardId: 4
+                    - id: 11
+                      deckId: 2
+                      cardId: 5
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /decks/{id}:
+    get:
+      tags:
+        - Decks
+      summary: Récupérer un deck spécifique par son ID
+      description: |
+        Retourne les détails d'un deck spécifique.
+        
+        **Validations:**
+        - Authentification requise (JWT)
+        - L'ID doit être un nombre valide
+        - Le deck doit exister
+        - Le deck doit appartenir à l'utilisateur connecté
+        
+        **Retour:**
+        - Détails du deck avec toutes ses cartes associées
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du deck à récupérer
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Deck récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deck'
+              example:
+                id: 1
+                name: "Mon équipe électrique"
+                userId: 1
+                deckCards:
+                  - id: 1
+                    deckId: 1
+                    cardId: 25
+                  - id: 2
+                    deckId: 1
+                    cardId: 26
+                  - id: 3
+                    deckId: 1
+                    cardId: 135
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    patch:
+      tags:
+        - Decks
+      summary: Mettre à jour un deck existant
+      description: |
+        Met à jour le nom et/ou les cartes d'un deck existant.
+        
+        **Validations:**
+        - Authentification requise (JWT)
+        - L'ID doit être un nombre valide
+        - Le deck doit exister
+        - Le deck doit appartenir à l'utilisateur connecté
+        - Le nom est obligatoire
+        - Le deck doit contenir exactement 10 cartes
+        - Toutes les cartes doivent exister
+        
+        **Processus:**
+        1. Vérifie l'authentification et la propriété
+        2. Valide les données
+        3. Supprime les anciennes associations de cartes
+        4. Crée les nouvelles associations
+        5. Met à jour le nom du deck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du deck à mettre à jour
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeckRequest'
+            examples:
+              updateElectric:
+                summary: Mise à jour équipe électrique
+                value:
+                  name: "Équipe électrique v2"
+                  cards: [25, 26, 135, 81, 82, 100, 101, 172, 239, 466]
+      responses:
+        '200':
+          description: Deck mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+              example:
+                message: "Deck mis à jour avec succès"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags:
+        - Decks
+      summary: Supprimer un deck
+      description: |
+        Supprime définitivement un deck et toutes ses associations de cartes.
+        
+        **Validations:**
+        - Authentification requise (JWT)
+        - L'ID doit être un nombre valide
+        - Le deck doit exister
+        - Le deck doit appartenir à l'utilisateur connecté
+        
+        **Processus:**
+        1. Vérifie l'authentification et la propriété
+        2. Supprime toutes les associations de cartes (DeckCard)
+        3. Supprime le deck
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID du deck à supprimer
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Deck supprimé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+              example:
+                message: "Deck supprimé avec succès"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'

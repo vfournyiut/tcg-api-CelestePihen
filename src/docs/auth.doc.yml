@@ -1,0 +1,101 @@
+paths:
+  /auth/sign-up:
+    post:
+      tags:
+        - Auth
+      summary: Inscription d'un nouvel utilisateur
+      description: |
+        Crée un nouveau compte utilisateur avec email, username et mot de passe.
+        
+        **Validations:**
+        - Email doit être unique
+        - Username doit être unique
+        - Tous les champs sont obligatoires
+        
+        **Processus:**
+        1. Vérifie l'unicité de l'email et du username
+        2. Hash le mot de passe avec bcrypt
+        3. Crée l'utilisateur en base de données
+        4. Génère un token JWT valide 7 jours
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+            examples:
+              example1:
+                value:
+                  email: "ash@pokemon.com"
+                  username: "ash_ketchum"
+                  password: "pikachu123"
+      responses:
+        '201':
+          description: Utilisateur créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignUpResponse'
+              example:
+                message: "Utilisateur créé"
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYXNoQHBva2Vtb24uY29tIiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDA2MDQ4MDB9.xxx"
+                userCreated:
+                  id: 1
+                  username: "ash_ketchum"
+                  email: "ash@pokemon.com"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /auth/sign-in:
+    post:
+      tags:
+        - Auth
+      summary: Connexion d'un utilisateur
+      description: |
+        Authentifie un utilisateur avec email et mot de passe.
+        
+        **Processus:**
+        1. Vérifie que l'utilisateur existe
+        2. Compare le mot de passe avec le hash stocké
+        3. Génère un token JWT valide 1 heure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+            examples:
+              example1:
+                value:
+                  email: "ash@pokemon.com"
+                  password: "pikachu123"
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                message: "Connexion réussie"
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYXNoQHBva2Vtb24uY29tIiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAzNjAwMDB9.xxx"
+                user:
+                  id: 1
+                  name: "ash_ketchum"
+                  email: "ash@pokemon.com"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          description: Email ou mot de passe incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Email ou mot de passe incorrect"
+        '500':
+          $ref: '#/components/responses/ServerError'
