@@ -1,0 +1,45 @@
+paths:
+  /cards:
+    get:
+      tags:
+        - Cards
+      summary: Récupérer toutes les cartes Pokémon
+      description: |
+        Retourne la liste complète de toutes les cartes disponibles dans le jeu.
+        
+        **Caractéristiques:**
+        - Pas d'authentification requise
+        - Les cartes sont triées par numéro Pokédex croissant
+        - Retourne tous les attributs des cartes (nom, HP, attaque, type, etc.)
+      responses:
+        '200':
+          description: Liste des cartes récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardsResponse'
+              example:
+                cards:
+                  - id: 1
+                    name: "Pikachu"
+                    hp: 60
+                    attack: 90
+                    type: "Electric"
+                    pokedexNumber: 25
+                    imgUrl: "https://example.com/pikachu.png"
+                  - id: 2
+                    name: "Raichu"
+                    hp: 90
+                    attack: 90
+                    type: "Electric"
+                    pokedexNumber: 26
+                    imgUrl: "https://example.com/raichu.png"
+                  - id: 3
+                    name: "Jolteon"
+                    hp: 65
+                    attack: 110
+                    type: "Electric"
+                    pokedexNumber: 135
+                    imgUrl: "https://example.com/jolteon.png"
+        '500':
+          $ref: '#/components/responses/ServerError'
