@@ -10,6 +10,8 @@ import cors from "cors";
 import {authRouter} from "./route/auth.route";
 import {cardRouter} from "./route/card.route";
 import {deckRouter} from "./route/deck.route";
+import swaggerUi from 'swagger-ui-express'
+import {swaggerDocument} from './docs'
 
 /**
  * Instance de l'application Express
@@ -26,6 +28,12 @@ app.use(
 );
 
 app.use(express.json());
+
+// Documentation Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "API Documentation"
+}))
 
 // Serve static files (Socket.io test client)
 app.use(express.static('public'));
