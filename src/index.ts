@@ -1,3 +1,8 @@
+/**
+ * @file Point d'entrée de l'application
+ * @description Configure et démarre le serveur Express avec toutes les routes et middlewares
+ */
+
 import {createServer} from "http";
 import {env} from "./env";
 import express from "express";
@@ -6,7 +11,10 @@ import {authRouter} from "./route/auth.route";
 import {cardRouter} from "./route/card.route";
 import {deckRouter} from "./route/deck.route";
 
-// Create Express app
+/**
+ * Instance de l'application Express
+ * @const {express.Application}
+ */
 export const app = express();
 
 // Middlewares
@@ -22,7 +30,13 @@ app.use(express.json());
 // Serve static files (Socket.io test client)
 app.use(express.static('public'));
 
-// Health check endpoint
+/**
+ * Health check endpoint
+ * @route GET /api/health
+ * @returns {Object} 200 - Statut du serveur
+ * @returns {string} 200.status - État du serveur (ok)
+ * @returns {string} 200.message - Message de confirmation
+ */
 app.get("/api/health", (_req, res) => {
     res.json({status: "ok", message: "TCG Backend Server is running"});
 });

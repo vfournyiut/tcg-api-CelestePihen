@@ -1,3 +1,8 @@
+/**
+ * @file Middleware d'authentification JWT
+ * @description Fournit le middleware pour valider les tokens JWT et protéger les routes
+ */
+
 import {NextFunction, Request, Response} from 'express'
 import jwt from 'jsonwebtoken'
 
@@ -10,6 +15,24 @@ declare global {
     }
 }
 
+/**
+ * Middleware d'authentification par token JWT
+ * Vérifie la présence et la validité du token JWT dans l'en-tête Authorization
+ *
+ * @param {Request} req - Objet de requête Express
+ * @param {Response} res - Objet de réponse Express
+ * @param {NextFunction} next - Fonction pour passer au middleware suivant
+ * @returns {void}
+ *
+ * @throws {401} Token manquant - Si l'en-tête Authorization n'est pas présent
+ * @throws {401} Token invalide ou expiré - Si le token ne peut pas être vérifié
+ *
+ * @description
+ * - Récupère le token depuis l'en-tête Authorization (format: "Bearer TOKEN")
+ * - Vérifie et décode le token avec la clé secrète JWT
+ * - Ajoute l'userId à la requête pour utilisation dans les routes protégées
+ * - Passe au middleware/route suivant si le token est valide
+ */
 export const authenticateToken = (
     req: Request,
     res: Response,
