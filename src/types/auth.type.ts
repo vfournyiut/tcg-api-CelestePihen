@@ -35,7 +35,7 @@ export type SignInRequestBody = {
  * @extends {Request}
  * @property {SignUpRequestBody} body - Corps de la requête contenant les données d'inscription
  */
-export interface SignUpRequest extends Request<{}, any, SignUpRequestBody> {
+export interface SignUpRequest extends Request<{}, unknown, SignUpRequestBody> {
 }
 
 /**
@@ -44,5 +44,5 @@ export interface SignUpRequest extends Request<{}, any, SignUpRequestBody> {
  * @extends {Request}
  * @property {SignInRequestBody} body - Corps de la requête contenant les identifiants
  */
-export interface SignInRequest extends Request<{}, any, SignInRequestBody> {
+export interface SignInRequest extends Request<{}, unknown, SignInRequestBody> {
 }

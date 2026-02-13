@@ -22,7 +22,7 @@ export type DeckRequestBody = {
  * @extends {Request}
  * @property {DeckRequestBody} body - Corps de la requête contenant les données du deck
  */
-export interface DeckRequest extends Request<{}, any, DeckRequestBody> {
+export interface DeckRequest extends Request<{}, unknown, DeckRequestBody> {
 }
 
 /**
@@ -52,5 +52,5 @@ export type DeckPatchRequestBody = {
  * @property {DeckRequestParam} params - Paramètres de route (ID du deck)
  * @property {DeckPatchRequestBody} body - Corps de la requête contenant les nouvelles données du deck
  */
-export interface DeckPatchRequest extends Request<DeckRequestParam, any, DeckPatchRequestBody> {
+export interface DeckPatchRequest extends Request<DeckRequestParam, unknown, DeckPatchRequestBody> {
 }
