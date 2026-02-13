@@ -53,6 +53,7 @@
     "@vitest/coverage-v8": "4.0.15",
     "@vitest/ui": "4.0.15",
     "eslint": "9.39.2",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^3.8.1",
     "tsx": "4.7.0",
     "typescript": "5.4.5",

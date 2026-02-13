@@ -11,6 +11,14 @@ export type SignInRequestBody = {
   password: string
 }
 
-export interface SignUpRequest extends Request<{}, any, SignUpRequestBody> {}
+export interface SignUpRequest extends Request<
+  unknown,
+  unknown,
+  SignUpRequestBody
+> {}
 
-export interface SignInRequest extends Request<{}, any, SignInRequestBody> {}
+export interface SignInRequest extends Request<
+  unknown,
+  unknown,
+  SignInRequestBody
+> {}

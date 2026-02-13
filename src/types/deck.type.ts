@@ -5,7 +5,11 @@ export type DeckRequestBody = {
   cards: number[]
 }
 
-export interface DeckRequest extends Request<{}, any, DeckRequestBody> {}
+export interface DeckRequest extends Request<
+  unknown,
+  unknown,
+  DeckRequestBody
+> {}
 
 export type DeckRequestParam = {
   id: string
@@ -18,6 +22,6 @@ export type DeckPatchRequestBody = {
 
 export interface DeckPatchRequest extends Request<
   DeckRequestParam,
-  any,
+  unknown,
   DeckPatchRequestBody
 > {}

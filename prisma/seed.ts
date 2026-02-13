@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+
 import { prisma } from '../src/database'
-import { CardModel } from '../src/generated/prisma/models/Card'
 import { PokemonType } from '../src/generated/prisma/enums'
+import { CardModel } from '../src/generated/prisma/models/Card'
 
 /**
  * Retourne 10 cartes aléatoires parmi les cartes disponibles
