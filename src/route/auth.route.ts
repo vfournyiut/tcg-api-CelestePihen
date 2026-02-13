@@ -3,9 +3,10 @@
  * @description Gère l'inscription et la connexion des utilisateurs
  */
 
-import {Response, Router} from 'express'
 import bcrypt from 'bcryptjs'
+import {Response, Router} from 'express'
 import jwt from 'jsonwebtoken'
+
 import {prisma} from '../database'
 import {SignInRequest, SignUpRequest} from "../types/auth.type"
 

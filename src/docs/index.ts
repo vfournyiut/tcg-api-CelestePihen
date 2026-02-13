@@ -3,9 +3,9 @@
  * @description Charge et fusionne tous les fichiers de documentation OpenAPI
  */
 
-import YAML from 'yamljs'
 import path from 'path'
 import {fileURLToPath} from 'url'
+import YAML from 'yamljs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

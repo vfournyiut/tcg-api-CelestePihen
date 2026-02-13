@@ -3,15 +3,16 @@
  * @description Configure et démarre le serveur Express avec toutes les routes et middlewares
  */
 
-import {createServer} from "http";
-import {env} from "./env";
-import express from "express";
 import cors from "cors";
+import express from "express";
+import {createServer} from "http";
+import swaggerUi from 'swagger-ui-express'
+
+import {swaggerDocument} from './docs'
+import {env} from "./env";
 import {authRouter} from "./route/auth.route";
 import {cardRouter} from "./route/card.route";
 import {deckRouter} from "./route/deck.route";
-import swaggerUi from 'swagger-ui-express'
-import {swaggerDocument} from './docs'
 
 /**
  * Instance de l'application Express
