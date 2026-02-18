@@ -3,9 +3,11 @@
  * @description Configure et démarre le serveur Express avec toutes les routes et middlewares
  */
 
+import * as http from "node:http";
+
 import cors from "cors";
 import express from "express";
-import {createServer} from "http";
+import { Server } from 'socket.io'
 import swaggerUi from 'swagger-ui-express'
 
 import {swaggerDocument} from './docs'
@@ -19,6 +21,12 @@ import {deckRouter} from "./route/deck.route";
  * @const {express.Application}
  */
 export const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  },
+})
 
 // Middlewares
 app.use(
@@ -39,6 +47,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 // Serve static files (Socket.io test client)
 app.use(express.static('public'));
 
+// Route Express classique
+app.get('/', (_req, res) => {
+    res.send('Serveur Socket.IO actif')
+})
+
 /**
  * Health check endpoint
  * @route GET /api/health
@@ -56,16 +69,22 @@ app.use('/api/decks', deckRouter);
 
 // Start server only if this file is run directly (not imported for tests)
 if (require.main === module) {
-    // Create HTTP server
-    const httpServer = createServer(app);
-
-
     // Start server
     try {
-        httpServer.listen(env.PORT, () => {
-            console.log(`\n🚀 Server is running on http://localhost:${env.PORT}`);
-            console.log(`🧪 Socket.io Test Client available at http://localhost:${env.PORT}`);
-        });
+      // Écoute des connexions Socket.IO
+      io.on('connection', (socket) => {
+        console.log("Un client s'est connecté:", socket.id)
+        socket.on('disconnect', () => {
+          console.log("Un client s'est déconnecté:", socket.id)
+        })
+      })
+
+      server.listen(env.PORT, () => {
+        console.log(`\n🚀 Server is running on http://localhost:${env.PORT}`)
+        console.log(
+          `🧪 Socket.io Test Client available at http://localhost:${env.PORT}`,
+        )
+      })
     } catch (error) {
         console.error("Failed to start server:", error);
         process.exit(1);
