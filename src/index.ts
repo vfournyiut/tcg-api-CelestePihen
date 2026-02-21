@@ -7,7 +7,6 @@ import * as http from "node:http";
 
 import cors from "cors";
 import express from "express";
-import { Server } from 'socket.io'
 import swaggerUi from 'swagger-ui-express'
 
 import {swaggerDocument} from './docs'
@@ -15,6 +14,7 @@ import {env} from "./env";
 import {authRouter} from "./route/auth.route";
 import {cardRouter} from "./route/card.route";
 import {deckRouter} from "./route/deck.route";
+import {PokemonServer} from "./socket/Pokemon";
 
 /**
  * Instance de l'application Express
@@ -22,11 +22,8 @@ import {deckRouter} from "./route/deck.route";
  */
 export const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  },
-})
+
+new PokemonServer(server);
 
 // Middlewares
 app.use(
@@ -38,14 +35,14 @@ app.use(
 
 app.use(express.json());
 
+// Serve static files (Socket.io test client)
+app.use(express.static('public'));
+
 // Documentation Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: "API Documentation"
 }))
-
-// Serve static files (Socket.io test client)
-app.use(express.static('public'));
 
 // Route Express classique
 app.get('/', (_req, res) => {
@@ -71,14 +68,6 @@ app.use('/api/decks', deckRouter);
 if (require.main === module) {
     // Start server
     try {
-      // Écoute des connexions Socket.IO
-      io.on('connection', (socket) => {
-        console.log("Un client s'est connecté:", socket.id)
-        socket.on('disconnect', () => {
-          console.log("Un client s'est déconnecté:", socket.id)
-        })
-      })
-
       server.listen(env.PORT, () => {
         console.log(`\n🚀 Server is running on http://localhost:${env.PORT}`)
         console.log(
