@@ -6,13 +6,13 @@ paths:
       summary: Créer un nouveau deck
       description: |
         Crée un nouveau deck personnalisé contenant exactement 10 cartes Pokémon.
-        
+
         **Validations:**
         - Authentification requise (JWT)
         - Le nom du deck est obligatoire
         - Le deck doit contenir exactement 10 cartes
         - Toutes les cartes doivent exister (vérification via numéro Pokédex)
-        
+
         **Processus:**
         1. Vérifie l'authentification
         2. Valide le nom et le nombre de cartes
@@ -30,12 +30,12 @@ paths:
               electricTeam:
                 summary: Équipe électrique
                 value:
-                  name: "Mon équipe électrique"
+                  name: 'Mon équipe électrique'
                   cards: [25, 26, 135, 81, 82, 100, 101, 172, 239, 466]
               fireTeam:
                 summary: Équipe feu
                 value:
-                  name: "Équipe de feu"
+                  name: 'Équipe de feu'
                   cards: [4, 5, 6, 37, 38, 58, 59, 77, 78, 136]
       responses:
         '201':
@@ -45,7 +45,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessMessage'
               example:
-                message: "Deck créé avec succès"
+                message: 'Deck créé avec succès'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -60,9 +60,9 @@ paths:
       summary: Récupérer tous mes decks
       description: |
         Retourne tous les decks appartenant à l'utilisateur connecté.
-        
+
         **Authentification requise:** JWT Bearer Token
-        
+
         **Retour:**
         - Liste de tous les decks de l'utilisateur
         - Chaque deck contient ses cartes associées
@@ -79,7 +79,7 @@ paths:
                   $ref: '#/components/schemas/Deck'
               example:
                 - id: 1
-                  name: "Mon équipe électrique"
+                  name: 'Mon équipe électrique'
                   userId: 1
                   deckCards:
                     - id: 1
@@ -89,7 +89,7 @@ paths:
                       deckId: 1
                       cardId: 26
                 - id: 2
-                  name: "Équipe de feu"
+                  name: 'Équipe de feu'
                   userId: 1
                   deckCards:
                     - id: 10
@@ -110,13 +110,13 @@ paths:
       summary: Récupérer un deck spécifique par son ID
       description: |
         Retourne les détails d'un deck spécifique.
-        
+
         **Validations:**
         - Authentification requise (JWT)
         - L'ID doit être un nombre valide
         - Le deck doit exister
         - Le deck doit appartenir à l'utilisateur connecté
-        
+
         **Retour:**
         - Détails du deck avec toutes ses cartes associées
       security:
@@ -139,7 +139,7 @@ paths:
                 $ref: '#/components/schemas/Deck'
               example:
                 id: 1
-                name: "Mon équipe électrique"
+                name: 'Mon équipe électrique'
                 userId: 1
                 deckCards:
                   - id: 1
@@ -166,7 +166,7 @@ paths:
       summary: Mettre à jour un deck existant
       description: |
         Met à jour le nom et/ou les cartes d'un deck existant.
-        
+
         **Validations:**
         - Authentification requise (JWT)
         - L'ID doit être un nombre valide
@@ -175,7 +175,7 @@ paths:
         - Le nom est obligatoire
         - Le deck doit contenir exactement 10 cartes
         - Toutes les cartes doivent exister
-        
+
         **Processus:**
         1. Vérifie l'authentification et la propriété
         2. Valide les données
@@ -203,7 +203,7 @@ paths:
               updateElectric:
                 summary: Mise à jour équipe électrique
                 value:
-                  name: "Équipe électrique v2"
+                  name: 'Équipe électrique v2'
                   cards: [25, 26, 135, 81, 82, 100, 101, 172, 239, 466]
       responses:
         '200':
@@ -213,7 +213,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessMessage'
               example:
-                message: "Deck mis à jour avec succès"
+                message: 'Deck mis à jour avec succès'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -231,13 +231,13 @@ paths:
       summary: Supprimer un deck
       description: |
         Supprime définitivement un deck et toutes ses associations de cartes.
-        
+
         **Validations:**
         - Authentification requise (JWT)
         - L'ID doit être un nombre valide
         - Le deck doit exister
         - Le deck doit appartenir à l'utilisateur connecté
-        
+
         **Processus:**
         1. Vérifie l'authentification et la propriété
         2. Supprime toutes les associations de cartes (DeckCard)
@@ -261,7 +261,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessMessage'
               example:
-                message: "Deck supprimé avec succès"
+                message: 'Deck supprimé avec succès'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':

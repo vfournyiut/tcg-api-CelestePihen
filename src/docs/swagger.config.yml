@@ -3,12 +3,12 @@ info:
   title: TCG Pokémon API
   description: |
     API REST pour gérer une application de cartes à collectionner Pokémon.
-    
+
     ## Fonctionnalités
     - 🔐 Authentification JWT (inscription, connexion)
     - 🎴 Gestion des cartes Pokémon
     - 📚 Gestion des decks personnalisés (10 cartes par deck)
-    
+
     ## Authentification
     Pour accéder aux routes protégées, utilisez le bouton **Authorize** et entrez votre token JWT au format: `Bearer <votre_token>`
   version: 1.0.0
@@ -53,12 +53,12 @@ components:
         username:
           type: string
           description: Nom d'utilisateur unique
-          example: "ash_ketchum"
+          example: 'ash_ketchum'
         email:
           type: string
           format: email
           description: Adresse email unique
-          example: "ash@pokemon.com"
+          example: 'ash@pokemon.com'
       required:
         - id
         - username
@@ -74,7 +74,7 @@ components:
         name:
           type: string
           description: Nom du Pokémon
-          example: "Pikachu"
+          example: 'Pikachu'
         hp:
           type: integer
           description: Points de vie
@@ -107,7 +107,7 @@ components:
             - Steel
             - Fairy
           description: Type du Pokémon
-          example: "Electric"
+          example: 'Electric'
         pokedexNumber:
           type: integer
           description: Numéro national du Pokédex
@@ -118,7 +118,7 @@ components:
           format: uri
           nullable: true
           description: URL de l'image de la carte
-          example: "https://example.com/pikachu.png"
+          example: 'https://example.com/pikachu.png'
       required:
         - id
         - name
@@ -137,7 +137,7 @@ components:
         name:
           type: string
           description: Nom du deck
-          example: "Mon équipe électrique"
+          example: 'Mon équipe électrique'
         userId:
           type: integer
           description: ID du propriétaire du deck
@@ -175,7 +175,7 @@ components:
         error:
           type: string
           description: Message d'erreur
-          example: "Erreur serveur"
+          example: 'Erreur serveur'
       required:
         - error
 
@@ -186,18 +186,18 @@ components:
           type: string
           format: email
           description: Adresse email de l'utilisateur
-          example: "ash@pokemon.com"
+          example: 'ash@pokemon.com'
         username:
           type: string
           description: Nom d'utilisateur (unique)
           minLength: 3
-          example: "ash_ketchum"
+          example: 'ash_ketchum'
         password:
           type: string
           format: password
           description: Mot de passe (sera hashé)
           minLength: 6
-          example: "pikachu123"
+          example: 'pikachu123'
       required:
         - email
         - username
@@ -210,12 +210,12 @@ components:
           type: string
           format: email
           description: Adresse email
-          example: "ash@pokemon.com"
+          example: 'ash@pokemon.com'
         password:
           type: string
           format: password
           description: Mot de passe
-          example: "pikachu123"
+          example: 'pikachu123'
       required:
         - email
         - password
@@ -225,11 +225,11 @@ components:
       properties:
         message:
           type: string
-          example: "Connexion réussie"
+          example: 'Connexion réussie'
         token:
           type: string
           description: Token JWT valide
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         user:
           $ref: '#/components/schemas/User'
       required:
@@ -242,11 +242,11 @@ components:
       properties:
         message:
           type: string
-          example: "Utilisateur créé"
+          example: 'Utilisateur créé'
         token:
           type: string
           description: Token JWT valide 7 jours
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         userCreated:
           $ref: '#/components/schemas/User'
       required:
@@ -261,7 +261,7 @@ components:
           type: string
           description: Nom du deck
           minLength: 1
-          example: "Mon équipe électrique"
+          example: 'Mon équipe électrique'
         cards:
           type: array
           description: Liste de 10 numéros Pokédex
@@ -282,7 +282,7 @@ components:
           type: string
           description: Nouveau nom du deck
           minLength: 1
-          example: "Équipe électrique v2"
+          example: 'Équipe électrique v2'
         cards:
           type: array
           description: Nouvelle liste de 10 numéros Pokédex
@@ -301,7 +301,7 @@ components:
       properties:
         message:
           type: string
-          example: "Opération réussie"
+          example: 'Opération réussie'
       required:
         - message
 
@@ -325,10 +325,10 @@ components:
           examples:
             missingToken:
               value:
-                error: "Token manquant"
+                error: 'Token manquant'
             invalidToken:
               value:
-                error: "Token invalide ou expiré"
+                error: 'Token invalide ou expiré'
 
     ForbiddenError:
       description: Accès refusé (ressource ne vous appartient pas)
@@ -346,7 +346,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
           example:
-            error: "Deck invalide"
+            error: 'Deck invalide'
 
     BadRequestError:
       description: Données invalides
@@ -357,10 +357,10 @@ components:
           examples:
             invalidData:
               value:
-                error: "Données invalides"
+                error: 'Données invalides'
             invalidCards:
               value:
-                error: "Cartes invalides"
+                error: 'Cartes invalides'
 
     ConflictError:
       description: Conflit (ressource existe déjà)
@@ -369,7 +369,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
           example:
-            error: "Email ou username invalide"
+            error: 'Email ou username invalide'
 
     ServerError:
       description: Erreur interne du serveur
@@ -378,4 +378,4 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
           example:
-            error: "Erreur serveur"
+            error: 'Erreur serveur'

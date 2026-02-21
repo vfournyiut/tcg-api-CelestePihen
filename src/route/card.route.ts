@@ -3,9 +3,9 @@
  * @description Gère la récupération des cartes Pokémon
  */
 
-import {Request, Response, Router} from 'express'
+import { Request, Response, Router } from 'express'
 
-import {prisma} from '../database'
+import { prisma } from '../database'
 
 /**
  * Router Express pour les routes des cartes
@@ -37,25 +37,25 @@ export const cardRouter = Router()
  * - Retourne uniquement les champs nécessaires
  */
 cardRouter.get('/', async (_req: Request, res: Response) => {
-    try {
-        const cards = await prisma.card.findMany({
-            select: {
-                id: true,
-                name: true,
-                hp: true,
-                attack: true,
-                type: true,
-                pokedexNumber: true,
-                imgUrl: true
-            },
-            orderBy: {
-                pokedexNumber: 'asc'
-            }
-        });
+  try {
+    const cards = await prisma.card.findMany({
+      select: {
+        id: true,
+        name: true,
+        hp: true,
+        attack: true,
+        type: true,
+        pokedexNumber: true,
+        imgUrl: true,
+      },
+      orderBy: {
+        pokedexNumber: 'asc',
+      },
+    })
 
-        return res.status(200).json({ cards })
-    } catch (error) {
-        console.error('Erreur lors de l\'obtention des cartes:', error)
-        return res.status(500).json({error: 'Erreur serveur'})
-    }
-});
+    return res.status(200).json({ cards })
+  } catch (error) {
+    console.error("Erreur lors de l'obtention des cartes:", error)
+    return res.status(500).json({ error: 'Erreur serveur' })
+  }
+})

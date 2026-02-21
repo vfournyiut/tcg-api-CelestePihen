@@ -4,7 +4,7 @@
  */
 
 import path from 'path'
-import {fileURLToPath} from 'url'
+import { fileURLToPath } from 'url'
 import YAML from 'yamljs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -23,10 +23,10 @@ const deckDoc = YAML.load(path.join(__dirname, 'deck.doc.yml'))
  * @description Combine la configuration principale avec tous les endpoints des modules
  */
 export const swaggerDocument = {
-    ...swaggerConfig,
-    paths: {
-        ...authDoc.paths,
-        ...cardDoc.paths,
-        ...deckDoc.paths
-    }
+  ...swaggerConfig,
+  paths: {
+    ...authDoc.paths,
+    ...cardDoc.paths,
+    ...deckDoc.paths,
+  },
 }
