@@ -14,6 +14,7 @@ declare module 'express' {
      * @property {string} user.email - Email de l'utilisateur
      */
     interface Request {
+        userId?: number;
         user?: {
             userId: number;
             email: string;

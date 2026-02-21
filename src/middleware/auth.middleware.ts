@@ -6,15 +6,6 @@
 import { NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 
-// Étendre le type Request pour ajouter userId
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: number
-    }
-  }
-}
-
 /**
  * Middleware d'authentification par token JWT
  * Vérifie la présence et la validité du token JWT dans l'en-tête Authorization
