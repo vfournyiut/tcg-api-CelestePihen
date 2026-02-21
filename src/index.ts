@@ -14,7 +14,7 @@ import {env} from "./env";
 import {authRouter} from "./route/auth.route";
 import {cardRouter} from "./route/card.route";
 import {deckRouter} from "./route/deck.route";
-import {PokemonServer} from "./socket/Pokemon";
+import {PokemonServer} from "./sockets/Pokemon";
 
 /**
  * Instance de l'application Express
