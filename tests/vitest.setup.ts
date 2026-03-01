@@ -5,6 +5,8 @@ import { prisma } from '../src/database'
 
 process.env.JWT_SECRET = 'test-secret'
 
+process.env.JWT_SECRET = 'test-secret';
+
 vi.mock('../src/database', () => ({
   prisma: mockDeep<PrismaClient>(),
 }))

@@ -38,6 +38,9 @@ app.use(express.json())
 // Serve static files (Socket.io test client)
 app.use(express.static('public'))
 
+// Serve static files (Socket.io test client)
+app.use(express.static('public'));
+
 // Documentation Swagger UI
 app.use(
   '/api-docs',
