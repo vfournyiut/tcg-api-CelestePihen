@@ -3,11 +3,11 @@
  * @description Gère la création, récupération, mise à jour et suppression des decks
  */
 
-import {Request, Response, Router} from 'express'
+import { Request, Response, Router } from 'express'
 
-import {prisma} from '../database'
-import {authenticateToken} from "../middleware/auth.middleware";
-import {DeckPatchRequest, DeckRequest} from "../types/deck.type";
+import { prisma } from '../database'
+import { authenticateToken } from '../middleware/auth.middleware'
+import { DeckPatchRequest, DeckRequest } from '../types/deck.type'
 
 /**
  * Router Express pour les routes des decks
@@ -39,50 +39,54 @@ export const deckRouter = Router()
  * - Vérifie que toutes les cartes existent en base de données
  * - Crée le deck et associe les cartes
  */
-deckRouter.post('/', authenticateToken, async (req: DeckRequest, res: Response) => {
+deckRouter.post(
+  '/',
+  authenticateToken,
+  async (req: DeckRequest, res: Response) => {
     try {
-        const {name, cards} = req.body
+      const { name, cards } = req.body
 
-        if (!req.userId) {
-            return res.status(401).json({error: 'Token invalide ou expiré'})
-        }
+      if (!req.userId) {
+        return res.status(401).json({ error: 'Token invalide ou expiré' })
+      }
 
-        if (!name) {
-            return res.status(400).json({error: 'Nom invalide'})
-        }
+      if (!name) {
+        return res.status(400).json({ error: 'Nom invalide' })
+      }
 
-        if (cards.length !== 10) {
-            return res.status(400).json({error: 'Cartes invalides'})
-        }
+      if (cards.length !== 10) {
+        return res.status(400).json({ error: 'Cartes invalides' })
+      }
 
-        const foundCards = await prisma.card.findMany({
-            where: {pokedexNumber: {in: cards}}
-        });
+      const foundCards = await prisma.card.findMany({
+        where: { pokedexNumber: { in: cards } },
+      })
 
-        if (foundCards.length !== 10) {
-            return res.status(400).json({error: 'Cartes invalides'})
-        }
+      if (foundCards.length !== 10) {
+        return res.status(400).json({ error: 'Cartes invalides' })
+      }
 
-        await prisma.deck.create({
-            data: {
-                name: name,
-                userId: req.userId,
-                deckCards: {
-                    create: foundCards.map((card) => {
-                        return {
-                            cardId: card.id
-                        }
-                    })
-                }
-            },
-        });
+      await prisma.deck.create({
+        data: {
+          name: name,
+          userId: req.userId,
+          deckCards: {
+            create: foundCards.map((card) => {
+              return {
+                cardId: card.id,
+              }
+            }),
+          },
+        },
+      })
 
-        return res.status(201).json({message: "Deck créé avec succès"})
+      return res.status(201).json({ message: 'Deck créé avec succès' })
     } catch (error) {
-        console.error('Erreur lors de la création du deck: ', error)
-        return res.status(500).json({error: 'Erreur serveur'})
+      console.error('Erreur lors de la création du deck: ', error)
+      return res.status(500).json({ error: 'Erreur serveur' })
     }
-});
+  },
+)
 
 /**
  * Route de récupération de tous les decks de l'utilisateur connecté
@@ -105,28 +109,32 @@ deckRouter.post('/', authenticateToken, async (req: DeckRequest, res: Response) 
  * - Récupère tous les decks appartenant à l'utilisateur connecté
  * - Retourne les decks avec leurs cartes associées
  */
-deckRouter.get('/mine', authenticateToken, async (req: Request, res: Response) => {
+deckRouter.get(
+  '/mine',
+  authenticateToken,
+  async (req: Request, res: Response) => {
     try {
-        if (!req.userId) {
-            return res.status(401).json({error: 'Token invalide ou expiré'})
-        }
+      if (!req.userId) {
+        return res.status(401).json({ error: 'Token invalide ou expiré' })
+      }
 
-        const decks = await prisma.deck.findMany({
-            where: {userId: req.userId},
-            select: {
-                id: true,
-                name: true,
-                userId: true,
-                deckCards: true
-            }
-        })
+      const decks = await prisma.deck.findMany({
+        where: { userId: req.userId },
+        select: {
+          id: true,
+          name: true,
+          userId: true,
+          deckCards: true,
+        },
+      })
 
-        return res.status(200).json(decks)
+      return res.status(200).json(decks)
     } catch (error) {
-        console.error('Erreur lors de la récupération du deck: ', error)
-        return res.status(500).json({error: 'Erreur serveur'})
+      console.error('Erreur lors de la récupération du deck: ', error)
+      return res.status(500).json({ error: 'Erreur serveur' })
     }
-});
+  },
+)
 
 /**
  * Route de récupération d'un deck spécifique par son ID
@@ -154,42 +162,48 @@ deckRouter.get('/mine', authenticateToken, async (req: Request, res: Response) =
  * - Vérifie que le deck appartient à l'utilisateur connecté
  * - Retourne le deck avec ses cartes associées
  */
-deckRouter.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+deckRouter.get(
+  '/:id',
+  authenticateToken,
+  async (req: Request, res: Response) => {
     try {
-        if (!req.userId) {
-            return res.status(401).json({error: 'Token invalide ou expiré'})
-        }
+      if (!req.userId) {
+        return res.status(401).json({ error: 'Token invalide ou expiré' })
+      }
 
-        const deckId = parseInt(req.params.id);
+      const deckId = parseInt(req.params.id)
 
-        if (isNaN(deckId)) {
-            return res.status(404).json({error: 'Deck invalide'})
-        }
+      if (isNaN(deckId)) {
+        return res.status(404).json({ error: 'Deck invalide' })
+      }
 
-        const deck = await prisma.deck.findUnique({
-            where: {id: deckId},
-            select: {
-                id: true,
-                name: true,
-                userId: true,
-                deckCards: true
-            }
-        })
+      const deck = await prisma.deck.findUnique({
+        where: { id: deckId },
+        select: {
+          id: true,
+          name: true,
+          userId: true,
+          deckCards: true,
+        },
+      })
 
-        if (!deck) {
-            return res.status(404).json({error: 'Deck invalide'})
-        }
+      if (!deck) {
+        return res.status(404).json({ error: 'Deck invalide' })
+      }
 
-        if (deck.userId !== req.userId) {
-            return res.status(403).json({error: 'Ce deck n\'appartient pas à l\'utilisateur'})
-        }
+      if (deck.userId !== req.userId) {
+        return res
+          .status(403)
+          .json({ error: "Ce deck n'appartient pas à l'utilisateur" })
+      }
 
-        return res.status(200).json(deck)
+      return res.status(200).json(deck)
     } catch (error) {
-        console.error('Erreur lors de la récupération du deck: ', error)
-        return res.status(500).json({error: 'Erreur serveur'})
+      console.error('Erreur lors de la récupération du deck: ', error)
+      return res.status(500).json({ error: 'Erreur serveur' })
     }
-});
+  },
+)
 
 /**
  * Route de mise à jour d'un deck existant
@@ -219,65 +233,71 @@ deckRouter.get('/:id', authenticateToken, async (req: Request, res: Response) =>
  * - Supprime les anciennes associations de cartes
  * - Crée les nouvelles associations de cartes
  */
-deckRouter.patch('/:id', authenticateToken, async (req: DeckPatchRequest, res: Response) => {
+deckRouter.patch(
+  '/:id',
+  authenticateToken,
+  async (req: DeckPatchRequest, res: Response) => {
     try {
-        const { name, cards } = req.body
-        const deckId = parseInt(req.params.id)
+      const { name, cards } = req.body
+      const deckId = parseInt(req.params.id)
 
-        if (!req.userId) {
-            return res.status(401).json({error: 'Token invalide ou expiré'})
-        }
+      if (!req.userId) {
+        return res.status(401).json({ error: 'Token invalide ou expiré' })
+      }
 
-        // vérifie si deckId s'est bien converti en number ou si le nom est invalide
-        if (isNaN(deckId) || !name) {
-            return res.status(404).json({error: 'Deck invalide'})
-        }
+      // vérifie si deckId s'est bien converti en number ou si le nom est invalide
+      if (isNaN(deckId) || !name) {
+        return res.status(404).json({ error: 'Deck invalide' })
+      }
 
-        const deck = await prisma.deck.findUnique({
-            where: {id: deckId},
-        })
+      const deck = await prisma.deck.findUnique({
+        where: { id: deckId },
+      })
 
-        if (!deck) {
-            return res.status(404).json({error: 'Deck invalide'})
-        }
+      if (!deck) {
+        return res.status(404).json({ error: 'Deck invalide' })
+      }
 
-        if (deck.userId !== req.userId) {
-            return res.status(403).json({error: 'Ce deck n\'appartient pas à l\'utilisateur'})
-        }
+      if (deck.userId !== req.userId) {
+        return res
+          .status(403)
+          .json({ error: "Ce deck n'appartient pas à l'utilisateur" })
+      }
 
-        if (cards.length !== 10) {
-            return res.status(400).json({error: 'Cartes invalides'})
-        }
+      if (cards.length !== 10) {
+        return res.status(400).json({ error: 'Cartes invalides' })
+      }
 
-        const foundCards = await prisma.card.findMany({
-            where: {pokedexNumber: {in: cards}}
-        });
+      const foundCards = await prisma.card.findMany({
+        where: { pokedexNumber: { in: cards } },
+      })
 
-        if (foundCards.length !== 10) {
-            return res.status(400).json({error: 'Cartes invalides'})
-        }
+      if (foundCards.length !== 10) {
+        return res.status(400).json({ error: 'Cartes invalides' })
+      }
 
-        await prisma.deck.update({
-            where: {id: deck.id},
-            data: {
-                name: name,
-                deckCards: {
-                    deleteMany: {},
-                    create: foundCards.map((card) => {
-                        return {
-                            cardId: card.id
-                        }
-                    })
-                }
-            },
-        });
+      await prisma.deck.update({
+        where: { id: deck.id },
+        data: {
+          name: name,
+          deckCards: {
+            deleteMany: {},
+            create: foundCards.map((card) => {
+              return {
+                cardId: card.id,
+              }
+            }),
+          },
+        },
+      })
 
-        return res.status(200).json({message: "Deck mis à jour avec succès"})
+      return res.status(200).json({ message: 'Deck mis à jour avec succès' })
     } catch (error) {
-        console.error('Erreur lors de la mise à jour du deck: ', error)
-        return res.status(500).json({error: 'Erreur serveur'})
+      console.error('Erreur lors de la mise à jour du deck: ', error)
+      return res.status(500).json({ error: 'Erreur serveur' })
     }
-});
+  },
+)
 
 /**
  * Route de suppression d'un deck
@@ -303,48 +323,54 @@ deckRouter.patch('/:id', authenticateToken, async (req: DeckPatchRequest, res: R
  * - Supprime d'abord toutes les associations de cartes
  * - Supprime ensuite le deck
  */
-deckRouter.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+deckRouter.delete(
+  '/:id',
+  authenticateToken,
+  async (req: Request, res: Response) => {
     try {
-        if (!req.userId) {
-            return res.status(401).json({error: 'Token invalide ou expiré'})
-        }
+      if (!req.userId) {
+        return res.status(401).json({ error: 'Token invalide ou expiré' })
+      }
 
-        const deckId = parseInt(req.params.id);
+      const deckId = parseInt(req.params.id)
 
-        // vérifier si deckId s'est bien converti en number
-        if (isNaN(deckId)) {
-            return res.status(404).json({error: 'Deck invalide'})
-        }
+      // vérifier si deckId s'est bien converti en number
+      if (isNaN(deckId)) {
+        return res.status(404).json({ error: 'Deck invalide' })
+      }
 
-        const deck = await prisma.deck.findUnique({
-            where: {id: deckId},
-            select: {
-                id: true,
-                name: true,
-                userId: true,
-                deckCards: true
-            }
-        })
+      const deck = await prisma.deck.findUnique({
+        where: { id: deckId },
+        select: {
+          id: true,
+          name: true,
+          userId: true,
+          deckCards: true,
+        },
+      })
 
-        if (!deck) {
-            return res.status(404).json({error: 'Deck invalide'})
-        }
+      if (!deck) {
+        return res.status(404).json({ error: 'Deck invalide' })
+      }
 
-        if (deck.userId !== req.userId) {
-            return res.status(403).json({error: 'Ce deck n\'appartient pas à l\'utilisateur'})
-        }
+      if (deck.userId !== req.userId) {
+        return res
+          .status(403)
+          .json({ error: "Ce deck n'appartient pas à l'utilisateur" })
+      }
 
-        await prisma.deckCard.deleteMany({
-            where: {deckId: deck.id}
-        })
+      await prisma.deckCard.deleteMany({
+        where: { deckId: deck.id },
+      })
 
-        await prisma.deck.delete({
-            where: {id: deck.id}
-        })
+      await prisma.deck.delete({
+        where: { id: deck.id },
+      })
 
-        return res.status(200).json({message: 'Deck supprimé avec succès'})
+      return res.status(200).json({ message: 'Deck supprimé avec succès' })
     } catch (error) {
-        console.error('Erreur lors de la récupération du deck: ', error)
-        return res.status(500).json({error: 'Erreur serveur'})
+      console.error('Erreur lors de la récupération du deck: ', error)
+      return res.status(500).json({ error: 'Erreur serveur' })
     }
-});
+  },
+)

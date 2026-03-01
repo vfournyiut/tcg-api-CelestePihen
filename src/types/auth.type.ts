@@ -13,10 +13,10 @@ import { Request } from 'express'
  * @property {string} username - Nom d'utilisateur
  */
 export type SignUpRequestBody = {
-    email: string;
-    password: string;
-    username: string;
-};
+  email: string
+  password: string
+  username: string
+}
 
 /**
  * Type du corps de la requête de connexion
@@ -25,9 +25,9 @@ export type SignUpRequestBody = {
  * @property {string} password - Mot de passe en clair
  */
 export type SignInRequestBody = {
-    email: string;
-    password: string;
-};
+  email: string
+  password: string
+}
 
 /**
  * Interface de requête Express pour l'inscription
@@ -35,8 +35,11 @@ export type SignInRequestBody = {
  * @extends {Request}
  * @property {SignUpRequestBody} body - Corps de la requête contenant les données d'inscription
  */
-export interface SignUpRequest extends Request<{}, unknown, SignUpRequestBody> {
-}
+export interface SignUpRequest extends Request<
+  {},
+  unknown,
+  SignUpRequestBody
+> {}
 
 /**
  * Interface de requête Express pour la connexion
@@ -44,5 +47,8 @@ export interface SignUpRequest extends Request<{}, unknown, SignUpRequestBody> {
  * @extends {Request}
  * @property {SignInRequestBody} body - Corps de la requête contenant les identifiants
  */
-export interface SignInRequest extends Request<{}, unknown, SignInRequestBody> {
-}
+export interface SignInRequest extends Request<
+  {},
+  unknown,
+  SignInRequestBody
+> {}
