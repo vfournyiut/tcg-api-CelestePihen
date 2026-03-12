@@ -4,23 +4,33 @@ import { Server, Socket } from 'socket.io'
 
 import { prisma } from '../database'
 import { Card } from '../generated/prisma/client'
+import { calculateDamage } from '../utils/rules.util'
 
 // Types simplifiés pour les événements avec rooms
 interface ClientToServerEvents {
   getRooms: () => void
   createRoom: (data: { deckId: string }) => void
   joinRoom: (data: { roomId: string; deckId: string }) => void
-  drawCards: (roomId: string) => void
-  playCard: (roomId: string, cardIndex: string) => void
-  attack: (roomId: string) => void
-  endTurn: (roomId: string) => void
+  drawCards: (data: { roomId: string }) => void
+  playCard: (data: { roomId: string; cardIndex: number }) => void
+  attack: (data: { roomId: string }) => void
+  endTurn: (data: { roomId: string }) => void
 }
 
 interface ServerToClientEvents {
-  roomCreated: (room: Room) => void // TODO Confirmation envoyée au créateur avec les infos de la room
-  roomsListUpdated: (rooms: Room[]) => void // TODO Broadcast à tous les clients avec la liste mise à jour (création partie) & Broadcast à tous les clients (room retirée de la liste)
-  gameStarted: (cards: Card[], opponentCards: number) => void // TODO Envoyé aux 2 joueurs avec l'état initial
-  error: (message: string) => void
+  roomCreated: (data: { room: Room }) => void
+  roomsListUpdated: (data: { rooms: Room[] }) => void
+  gameStarted: (data: { roomId: string; currentPlayerSocketId: string }) => void
+  gameStateUpdated: (data: {
+    hand: Card[]
+    activeCard: Card | null
+    score: number
+    opponentActiveCard: Card | null
+    opponentScore: number
+    currentPlayerSocketId: string
+  }) => void
+  gameEnded: (data: { message: string }) => void
+  error: (data: { message: string }) => void
 }
 
 interface UserData {
@@ -33,12 +43,17 @@ interface Player {
   socketId: string
   userName: string
   deckId: number
+  hand: Card[]
+  deck: Card[]
+  activeCard: Card | null
+  score: number
 }
 
 interface Room {
   id: string
   host: Player
   opponent: Player | null
+  currentPlayerSocketId: string
   state: 'waiting' | 'playing'
 }
 
@@ -92,7 +107,9 @@ export class PokemonServer {
       socket.on('createRoom', async (data: { deckId: string }) =>
         this.handleCreateRoom(socket, userData, parseInt(data.deckId)),
       )
+
       socket.on('getRooms', () => this.handleGetRooms(socket))
+
       socket.on('joinRoom', async (data: { roomId: string; deckId: string }) =>
         this.handleJoinRoom(
           socket,
@@ -101,6 +118,22 @@ export class PokemonServer {
           parseInt(data.deckId),
         ),
       )
+
+      socket.on('drawCards', (data: { roomId: string }) => {
+        this.handleDrawCards(socket, data.roomId)
+      })
+
+      socket.on('playCard', (data: { roomId: string; cardIndex: number }) => {
+        this.handlePlayCard(socket, data.roomId, data.cardIndex)
+      })
+
+      socket.on('attack', (data: { roomId: string }) => {
+        this.handleAttack(socket, data.roomId)
+      })
+
+      socket.on('endTurn', (data: { roomId: string }) => {
+        this.handleEndTurn(socket, data.roomId)
+      })
     })
   }
 
@@ -116,19 +149,21 @@ export class PokemonServer {
     })
 
     if (!deck) {
-      socket.emit('error', "Ce deck n'existe pas.")
+      socket.emit('error', { message: "Ce deck n'existe pas." })
       return
     }
 
     // vérifier si le deck appartient au joueur
     if (deck?.userId !== userData.userId) {
-      socket.emit('error', 'Ce deck ne vous appartient pas.')
+      socket.emit('error', { message: 'Ce deck ne vous appartient pas.' })
       return
     }
 
     // vérifier si le deck est valide (= 10 cartes)
     if (deck?.deckCards.length !== 10) {
-      socket.emit('error', 'Le deck doit contenir exactement 10 cartes.')
+      socket.emit('error', {
+        message: 'Le deck doit contenir exactement 10 cartes.',
+      })
       return
     }
 
@@ -139,15 +174,20 @@ export class PokemonServer {
 
     const host: Player = {
       userId: userData.userId,
+      socketId: socket.id,
       userName: user!.username,
       deckId: deckId,
-      socketId: socket.id,
+      hand: [],
+      deck: [],
+      activeCard: null,
+      score: 0,
     }
 
     const room: Room = {
       host,
       id: host.userId.toString(),
       opponent: null,
+      currentPlayerSocketId: host.socketId,
       state: 'waiting',
     }
 
@@ -155,7 +195,7 @@ export class PokemonServer {
     socket.join(userData.userId.toString())
 
     // envoie les informations de la room à l'host
-    socket.emit('roomCreated', room)
+    socket.emit('roomCreated', { room })
 
     // broadcast à tous les clients avec la liste mise à jour
     this.broadcastRooms()
@@ -169,7 +209,7 @@ export class PokemonServer {
       }
     })
 
-    this.io.emit('roomsListUpdated', rooms)
+    this.io.emit('roomsListUpdated', { rooms })
   }
 
   private handleGetRooms(socket: TypedSocket) {
@@ -181,7 +221,7 @@ export class PokemonServer {
       }
     })
 
-    socket.emit('roomsListUpdated', rooms)
+    socket.emit('roomsListUpdated', { rooms })
   }
 
   private async handleJoinRoom(
@@ -191,14 +231,14 @@ export class PokemonServer {
     deckId: number,
   ) {
     if (!this.rooms.has(roomId)) {
-      socket.emit('error', "Cette room n'existe pas")
+      socket.emit('error', { message: "Cette room n'existe pas" })
       return
     }
 
     const room = this.rooms.get(roomId)!
 
     if (room.opponent !== null) {
-      socket.emit('error', 'Cette room est déjà complète')
+      socket.emit('error', { message: 'Cette room est déjà complète' })
       return
     }
 
@@ -215,19 +255,21 @@ export class PokemonServer {
     })
 
     if (!deck) {
-      socket.emit('error', "Ce deck n'existe pas.")
+      socket.emit('error', { message: "Ce deck n'existe pas." })
       return
     }
 
     // vérifier si le deck appartient au joueur
     if (deck?.userId !== userData.userId) {
-      socket.emit('error', 'Ce deck ne vous appartient pas.')
+      socket.emit('error', { message: 'Ce deck ne vous appartient pas.' })
       return
     }
 
     // vérifier si le deck est valide (= 10 cartes)
     if (deck?.deckCards.length !== 10) {
-      socket.emit('error', 'Le deck doit contenir exactement 10 cartes.')
+      socket.emit('error', {
+        message: 'Le deck doit contenir exactement 10 cartes.',
+      })
       return
     }
 
@@ -238,9 +280,13 @@ export class PokemonServer {
 
     const opponent: Player = {
       userId: userData.userId,
+      socketId: socket.id,
       userName: user!.username,
       deckId: deckId,
-      socketId: socket.id,
+      hand: [],
+      deck: [],
+      activeCard: null,
+      score: 0,
     }
 
     socket.join(roomId)
@@ -266,13 +312,297 @@ export class PokemonServer {
 
     const hostSocket = this.io.sockets.sockets.get(room.host.socketId)
     if (hostSocket) {
-      hostSocket.emit('gameStarted', hostCards, opponentCards.length)
+      hostSocket.emit('gameStarted', {
+        roomId: room.id,
+        currentPlayerSocketId: room.currentPlayerSocketId,
+      })
     }
 
-    socket.emit('gameStarted', opponentCards, hostCards.length)
+    socket.emit('gameStarted', {
+      roomId: room.id,
+      currentPlayerSocketId: room.currentPlayerSocketId,
+    })
+
+    room.host.deck = hostCards
+    opponent.deck = opponentCards
 
     this.broadcastRooms()
+  }
 
-    console.log(`${userData.email} a rejoint la room ${roomId}`)
+  private handleDrawCards(socket: TypedSocket, roomId: string) {
+    if (!this.rooms.has(roomId)) {
+      socket.emit('error', { message: "Cette room n'existe pas" })
+      return
+    }
+
+    const room = this.rooms.get(roomId)!
+
+    if (room.currentPlayerSocketId !== socket.id) {
+      socket.emit('error', {
+        message: "Ce n'est pas à votre tour de tirer les cartes",
+      })
+      return
+    }
+
+    if (socket.id === room.host.socketId) {
+      const randomCards: Card[] = []
+
+      for (let i = 5 - room.host.hand.length; i > 0; i--) {
+        const card = room.host.deck.shift()
+        if (card) randomCards.push(card)
+      }
+
+      randomCards.forEach((card) => {
+        room.host.hand.push(card)
+      })
+    } else {
+      const randomCards: Card[] = []
+
+      for (let i = 5 - room.opponent!.hand.length; i > 0; i--) {
+        const card = room.opponent!.deck.shift()
+        if (card) randomCards.push(card)
+      }
+
+      randomCards.forEach((card) => {
+        room.opponent!.hand.push(card)
+      })
+    }
+
+    this.broadcastGameState(room)
+  }
+
+  private broadcastGameState(room: Room) {
+    const host = room.host
+    const opponent = room.opponent!
+
+    const hostGameState = {
+      hand: host.hand,
+      activeCard: host.activeCard,
+      score: host.score,
+      opponentActiveCard: opponent.activeCard,
+      opponentScore: opponent.score,
+      currentPlayerSocketId: room.currentPlayerSocketId,
+    }
+
+    const opponentGameState = {
+      hand: opponent.hand,
+      activeCard: opponent.activeCard,
+      score: opponent.score,
+      opponentActiveCard: host.activeCard,
+      opponentScore: host.score,
+      currentPlayerSocketId: room.currentPlayerSocketId,
+    }
+
+    const hostSocket = this.io.sockets.sockets.get(host.socketId)
+    if (hostSocket) {
+      hostSocket.emit('gameStateUpdated', hostGameState)
+    }
+
+    const opponentSocket = this.io.sockets.sockets.get(opponent.socketId)
+    if (opponentSocket) {
+      opponentSocket.emit('gameStateUpdated', opponentGameState)
+    }
+  }
+
+  private handlePlayCard(
+    socket: TypedSocket,
+    roomId: string,
+    cardIndex: number,
+  ) {
+    if (!this.rooms.has(roomId)) {
+      socket.emit('error', { message: "Cette room n'existe pas" })
+      return
+    }
+
+    const room = this.rooms.get(roomId)!
+
+    if (room.currentPlayerSocketId !== socket.id) {
+      socket.emit('error', {
+        message: "Ce n'est pas à votre tour de jouer une carte",
+      })
+      return
+    }
+
+    if (socket.id === room.host.socketId) {
+      if (room.host.activeCard) {
+        socket.emit('error', { message: 'Vous avez déjà une carte active' })
+        return
+      }
+
+      if (cardIndex < 0 || cardIndex >= room.host.hand.length) {
+        socket.emit('error', { message: "Ceci n'est pas un index valide" })
+        return
+      }
+
+      // retirer la carte de la main et la mettre comme carte active
+      room.host.activeCard = room.host.hand.splice(cardIndex, 1)[0]
+    } else {
+      if (room.opponent!.activeCard) {
+        socket.emit('error', { message: 'Vous avez déjà une carte active' })
+        return
+      }
+
+      if (cardIndex < 0 || cardIndex >= room.opponent!.hand.length) {
+        socket.emit('error', { message: "Ceci n'est pas un index valide" })
+        return
+      }
+
+      room.opponent!.activeCard = room.opponent!.hand.splice(cardIndex, 1)[0]
+    }
+
+    this.broadcastGameState(room)
+  }
+
+  private handleAttack(socket: TypedSocket, roomId: string) {
+    if (!this.rooms.has(roomId)) {
+      socket.emit('error', { message: "Cette room n'existe pas" })
+      return
+    }
+
+    const room = this.rooms.get(roomId)!
+
+    if (room.currentPlayerSocketId !== socket.id) {
+      socket.emit('error', { message: "Ce n'est pas à votre tour d'attaquer" })
+      return
+    }
+
+    const host = room.host
+    const opponent = room.opponent!
+
+    if (socket.id === host.socketId) {
+      // vérifier que les deux joueurs ont une carte active
+      if (!host.activeCard) {
+        socket.emit('error', { message: "Vous n'avez pas de carte active" })
+        return
+      }
+
+      if (!opponent.activeCard) {
+        socket.emit('error', {
+          message: "Votre adversaire n'a pas de carte active",
+        })
+        return
+      }
+
+      // calculer les dégâts
+      const damage = calculateDamage(
+        host.activeCard.attack,
+        host.activeCard.type,
+        opponent.activeCard.type,
+      )
+
+      // appliquer les dégâts
+      opponent.activeCard.hp -= damage
+      room.currentPlayerSocketId =
+        room.currentPlayerSocketId === host.socketId
+          ? opponent.socketId
+          : host.socketId
+
+      // vérifier si le Pokémon de l'adversaire est KO
+      if (opponent.activeCard.hp <= 0) {
+        opponent.activeCard = null
+        host.score += 1
+
+        // vérifier si le joueur a gagné
+        if (host.score === 3) {
+          this.endGame(room)
+        } else {
+          this.broadcastGameState(room)
+        }
+      } else {
+        this.broadcastGameState(room)
+      }
+    } else {
+      if (!opponent.activeCard) {
+        socket.emit('error', { message: "Vous n'avez pas de carte active" })
+        return
+      }
+
+      if (!host.activeCard) {
+        socket.emit('error', {
+          message: "Votre adversaire n'a pas de carte active",
+        })
+        return
+      }
+
+      const damage = calculateDamage(
+        opponent.activeCard.attack,
+        opponent.activeCard.type,
+        host.activeCard.type,
+      )
+
+      host.activeCard.hp -= damage
+      room.currentPlayerSocketId =
+        room.currentPlayerSocketId === host.socketId
+          ? opponent.socketId
+          : host.socketId
+
+      if (host.activeCard.hp <= 0) {
+        host.activeCard = null
+        opponent.score += 1
+
+        if (opponent.score === 3) {
+          this.endGame(room)
+        } else {
+          this.broadcastGameState(room)
+        }
+      } else {
+        this.broadcastGameState(room)
+      }
+    }
+  }
+
+  private endGame(room: Room) {
+    const host = room.host
+    const opponent = room.opponent!
+
+    // envoie de l'événement avec le vainqueur
+    if (host.score === 3) {
+      this.io
+        .to(room.id)
+        .emit('gameEnded', { message: 'Le vainqueur est ' + host.userName })
+    } else {
+      this.io
+        .to(room.id)
+        .emit('gameEnded', { message: 'Le vainqueur est ' + opponent.userName })
+    }
+
+    // enlever les joueurs de la Room et la supprimer la Room
+    const hostSocket = this.io.sockets.sockets.get(host.socketId)
+    if (hostSocket) {
+      hostSocket.leave(room.id)
+    }
+
+    const opponentSocket = this.io.sockets.sockets.get(opponent.socketId)
+    if (opponentSocket) {
+      opponentSocket.leave(room.id)
+    }
+
+    this.rooms.delete(room.host.userId.toString())
+  }
+
+  private handleEndTurn(socket: TypedSocket, roomId: string) {
+    if (!this.rooms.has(roomId)) {
+      socket.emit('error', { message: "Cette room n'existe pas" })
+      return
+    }
+
+    const room = this.rooms.get(roomId)!
+
+    if (room.currentPlayerSocketId !== socket.id) {
+      socket.emit('error', { message: "Ce n'est pas à votre tour" })
+      return
+    }
+
+    const host = room.host
+    const opponent = room.opponent!
+
+    if (room.currentPlayerSocketId === host.socketId) {
+      room.currentPlayerSocketId = opponent.socketId
+    } else {
+      room.currentPlayerSocketId = host.socketId
+    }
+
+    // envoyer déjà un message indiquant le tour du joueur
+    this.broadcastGameState(room)
   }
 }
